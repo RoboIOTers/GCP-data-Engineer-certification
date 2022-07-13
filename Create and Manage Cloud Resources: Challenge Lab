@@ -41,7 +41,7 @@ Create a forwarding rule
       sed -i -- 's/nginx/Google Cloud Platform - '"\$HOSTNAME"'/' /var/www/html/index.nginx-debian.html
       EOF
       
-2: we create a load balancer temlate with using the script file created in step 1 above
+2: we create a load balancer template with using the script file created in step 1 above
 
       gcloud compute instance-templates create lb-template \
    --region=us-east1 \
@@ -53,13 +53,13 @@ Create a forwarding rule
    --metadata=startup-script=startup.sh
 
 Create a target pool
-    gcloud compute target-pools create nginx-pool
+    gcloud compute target-pools create lb-nginx-pool
    
 3: Create a managed instance group
       gcloud compute instance-groups managed create lb-instance-group \
       --size 2 \
       --template lb-template \
-      --target-pool nginx-pool \
+      --target-pool lb-nginx-pool \
       --region us-east1
       
 4: Create a firewall rule to allow traffic (80/tcp)
@@ -73,6 +73,40 @@ Create a target pool
  5: Create a health check
     gcloud compute health-checks create http http-basic-check \
     --port 80
+    
+ 6: Create a backend service and attach the manged instance group
+        
+    gcloud compute backend-services create nginx-backend-service \
+    --protocol=HTTP \
+    --port-name=http \
+    --health-checks=http-basic-check \
+    --global
+    
+    Add your instance group as the backend to the backend service:
+    
+    gcloud compute backend-services add-backend nginx-backend-service \
+    --instance-group=lb-instance-group \
+    --instance-group-zone=us-east1-b \
+    --global
+ 7: Create a URL map and target HTTP proxy to route requests to your URL map
+      
+            
+      gcloud compute url-maps create web-server-map \
+--default-service nginx-backend-service
+
+>>Create a target HTTP proxy to route requests to your URL map:
+
+gcloud compute target-http-proxies create http-lb-proxy \
+    --url-map web-map-http
+
+
+ 8: Create a forwarding rule
+ 
+ gcloud compute forwarding-rules create http-content-rule \
+    --address=lb-ipv4-1\
+    --global \
+    --target-http-proxy=http-lb-proxy \
+    --ports=80
 
 
 
