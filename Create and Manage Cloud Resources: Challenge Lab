@@ -59,15 +59,20 @@ gcloud compute instance-groups managed create lb-instance-group \
       gcloud compute firewall-rules create allow-tcp-rule-771 \--allow tcp:80
     
  5: Create a health check
-    gcloud compute health-checks create http http-basic-check 
+gcloud compute health-checks create http http-basic-check 
+gcloud compute instance-groups managed \
+set-named-ports lb-instance-group \
+--named-ports http:80
+    
+
     
  6: Create a backend service and attach the manged instance group
         
-    gcloud compute backend-services create nginx-backend-service \
-    --protocol=HTTP \
-    --port-name=http \
-    --health-checks=http-basic-check \
-    --global
+ gcloud compute backend-services create nginx-backend-service \
+ --protocol=HTTP \
+ --port-name=http \
+ --health-checks=http-basic-check \
+ --global
     
     Add your instance group as the backend to the backend service:
     
