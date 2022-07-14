@@ -1,0 +1,25 @@
+A: Set default zone and default region:
+    gcloud config set compute/zone us-east1-b
+    gcloud config set compute/region us-east1
+    
+B:Create three new virtual machines in your default zone and give them all the same tag.
+(Setting the tags field lets you reference these instances all at once, such as with a firewall rule
+    gcloud compute instances create [INSTANCE1-NAME] \
+  --image-family debian-9 \
+  --image-project debian-cloud \
+  --zone us-east1-b \
+  --tags network-lb-tag \
+  --metadata startup-script="#! /bin/bash
+    sudo apt-get update
+    sudo apt-get install apache2 -y
+    sudo service apache2 restart
+    echo '<!doctype html><html><body><h1>www1</h1></body></html>' | tee /var/www/html/index.html"
+    
+    
+    similarly create other two instances
+    
+ C:Create a firewall rule to allow external traffic to the VM instances:
+    gcloud compute firewall-rules create [FIREWALL RULE NAME] \
+    --target-tags network-lb-tag --allow tcp:80
+    
+    
